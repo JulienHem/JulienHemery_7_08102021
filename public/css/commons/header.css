@@ -1,0 +1,17 @@
+.header-logo{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.header-logo-img {
+    width: 45px;
+    height: 45px;
+}
+
+.header-logo-title {
+    color: #D04F4F;
+    font-size: 36px;
+    font-weight: bold;
+}

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="dist/css/all.css">
+    <title>Les Petits Plats</title>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-logo">
+            <img src="dist/img/logo.png" alt="logo" class="header-logo-img">
+            <div class="header-logo-title">Les Petits Plats</div>
+        </div>
+
+    </header>
+
+    <div class="search">
+        <input class="search-input" placeholder="Rechercher un ingrédient, appareil, ustensiles ou une recette" type="text">
+        <i class="fa fa-search"></i>
+    </div>
+
+    <div class="selected-item"></div>
+
+    <div class="filters">
+        <div class=" filter-head" id="ingredients-filter">
+            <div class="filter-head-input ingredients-input" >
+                <input  type="text" placeholder="Rechercher un ingrédient" class="filters-title" id="ingredients-input">
+                <span class="ingredients-arrow"><i class="fas fa-chevron-down dropdown-arrow"></i></span>
+            </div>
+
+            <div class="ingredients-filter-all dropdown"></div>
+
+        </div>
+        <div class="filter-head" id="apparels-filter">
+            <div class="filter-head-input apparels-input">
+                <input  type="text" placeholder="Rechercher un appareil" class="filters-title" id="apparels-input">
+                <i class="fas fa-chevron-down dropdown-arrow i apparels-arrow"></i>
+            </div>
+            <div class="apparels-filter-all dropdown"></div>
+        </div>
+
+        <div class="filter-head" id="tools-filter">
+            <div class="filter-head-input tools-input">
+                <input  type="text" placeholder="Rechercher un ustensile" id="ustensils-input" class="filters-title">
+                <i class="fas fa-chevron-down dropdown-arrow i tools-arrow"></i>
+            </div>
+
+            <div class="tools-filter-all dropdown"></div>
+        </div>
+
+    </div>
+
+
+    <div class="cards">
+
+    </div>
+
+</div>
+
+
+</body>
+<script src="dist/app.bundle.js"></script>
+</html>
