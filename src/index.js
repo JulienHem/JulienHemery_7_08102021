@@ -5,6 +5,7 @@ import '@fortawesome/fontawesome-free/js/regular';
 import '@fortawesome/fontawesome-free/js/brands';
 
 let _recipesArray = [];
+let _recipeResult = [];
 
 let searchBarResult = [];
 
@@ -12,6 +13,7 @@ let dropdownIngredientsArray = [];
 let dropdownUstensilsArray = [];
 let dropdownApparelsArray = [];
 
+let items = [];
 
 // For main searchbar
 let _noDuplicateIngredient = [];
@@ -22,6 +24,7 @@ let _noDuplicateApparels = [];
 let _dropdownTagsIngredients = [];
 let _dropdownTagsTools = [];
 let _dropdownTagsApparels = [];
+
 const _searchInput = document.querySelector('.search-input');
 const cardContainer = document.querySelector('.cards');
 const ingredientsFilter = document.querySelector('#ingredients-filter');
@@ -67,6 +70,7 @@ fetch('../../recipes.json')
 
 
 function displayRecipe(recipes) {
+    cardContainer.innerHTML = '';
 
     for (const {name, time, description, ingredients} of recipes) {
         const card = document.createElement('div');
@@ -78,7 +82,6 @@ function displayRecipe(recipes) {
         const cardIngredientContainer = document.createElement('div');
         const cardDetailsBot = document.createElement('div');
         const cardDescription = document.createElement('div');
-
         card.classList.add('card');
         cardImg.classList.add('card-img');
         cardDetails.classList.add('card-details');
@@ -119,10 +122,11 @@ function displayRecipe(recipes) {
 
 
 function searchRecipe() {
-    let recipeResult = [..._recipesArray];
+    _recipeResult = [..._recipesArray];
     let tagsIngredientsArray = [];
     let tagsToolArray = [];
     let tagsApparelsArray = [];
+
 
     _recipesArray.forEach(recipe => {
         let recipeIncluded = false;
@@ -146,61 +150,66 @@ function searchRecipe() {
             });
 
             if (recipe.appliance.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-
                 recipeIncluded = true;
             }
         }
 
         if (_dropdownTagsIngredients.length > 0) {
             hasBeenFiltered = true;
+            recipeIncluded = false;
 
-            recipe.ingredients.forEach(ingredient => {
-                recipeIncluded = false;
-
-                _dropdownTagsIngredients.forEach(ingredientTag => {
-                    if (ingredientTag.toLowerCase().includes(ingredient.ingredient.toLowerCase())) {
+            _dropdownTagsIngredients.forEach(ingredientTag => {
+                recipe.ingredients.forEach(ingredient => {
+                    if (ingredient.ingredient.toLowerCase().includes(ingredientTag.toLowerCase())) {
                         recipeIncluded = true;
                     }
                 })
+                if (!recipeIncluded) {
+                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
+                    return;
+                }
             });
-
+            if (!recipeIncluded) {
+                return;
+            }
         }
-
         if (_dropdownTagsTools.length > 0) {
             hasBeenFiltered = true;
-            recipe.ustensils.forEach(tool => {
-                recipeIncluded = false;
-
-                _dropdownTagsTools.forEach(toolsTag => {
-                    if (toolsTag.toLowerCase().includes(tool.toLowerCase())) {
+            recipeIncluded = false;
+            _dropdownTagsTools.forEach(toolsTag => {
+                recipe.ustensils.forEach(tool => {
+                    if (tool.toLowerCase().includes(toolsTag.toLowerCase())) {
                         recipeIncluded = true;
                     }
                 })
+                if (!recipeIncluded) {
+                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
+                    return;
+                }
             });
+            if (!recipeIncluded) {
+                return;
+            }
 
         }
-
         if (_dropdownTagsApparels.length > 0) {
             hasBeenFiltered = true;
             _dropdownTagsApparels.forEach(apparelsTag => {
-
-
-                recipeIncluded = apparelsTag.toLowerCase().includes(recipe.appliance.toLowerCase());
-            })
-
-
+                recipeIncluded = recipe.appliance.toLowerCase().includes(apparelsTag.toLowerCase());
+                console.log(recipeIncluded)
+                if (!recipeIncluded) {
+                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
+                    return;
+                }
+            });
+            if (!recipeIncluded) {
+                return;
+            }
         }
 
-        if (!recipeIncluded && hasBeenFiltered) {
-            const recipeIndex = recipeResult.indexOf(recipe);
-            recipeResult.splice(recipeIndex, 1);
-        }
     })
 
-    cardContainer.innerHTML = '';
-
-
-    recipeResult.forEach(recipe => {
+    _recipeResult.forEach(recipe => {
 
         recipe.ingredients.forEach(ingredient => {
             tagsIngredientsArray.push(ingredient.ingredient.toLowerCase())
@@ -217,75 +226,102 @@ function searchRecipe() {
     _noDuplicateIngredient = [...new Set(tagsIngredientsArray)];
     _noDuplicateUstensil = [...new Set(tagsToolArray)];
     _noDuplicateApparels = [...new Set(tagsApparelsArray)];
+    console.log(_recipeResult)
 
-    displayRecipe(recipeResult);
+    displayRecipe(_recipeResult);
     displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
     displayDetailsInFilters(_noDuplicateUstensil, toolsHiddenData, tagToolsInput, 'tools-filter', '#ED6454', _dropdownTagsTools);
     displayDetailsInFilters(_noDuplicateApparels, apparelsHiddenData, tagApparelsInput, 'apparels-filter', '#68D9A4', _dropdownTagsApparels);
 
 }
 
-function displayDetailsInFilters(itemsArray, itemContainer, input, parentContainer, backgroundColor, tagsArray) {
-    itemContainer.innerText = '';
+function spliceRecipe(recipeIncluded, hasBeenFiltered, recipe) {
+    if (!recipeIncluded && hasBeenFiltered) {
 
-    itemsArray.forEach((item, index) => {
-        const itemTitle = document.createElement('span');
-        itemTitle.classList.add('item-title');
-        itemTitle.innerText = item;
-        itemContainer.appendChild(itemTitle);
-        createTag(itemTitle, index, input, parentContainer, tagsArray, backgroundColor);
-    })
-
-
+        const recipeIndex = _recipeResult.indexOf(recipe);
+        if (recipeIndex !== -1) _recipeResult.splice(recipeIndex, 1);
+    }
 }
 
 
-function createTag(item, index, input, parentContainer, tagArray, backgroundColor) {
+function displayDetailsInFilters(itemsArray, itemContainer, input, parentContainer, backgroundColor, tagsArray) {
+    itemContainer.innerText = '';
+
+    itemsArray.forEach((item) => {
+        const itemTitle = document.createElement('span');
+
+        itemTitle.classList.add('item-title');
+        itemTitle.innerText = item;
+        itemContainer.appendChild(itemTitle);
+        createTag(itemTitle, itemsArray, itemContainer, input, parentContainer, tagsArray, backgroundColor);
+
+    })
+}
+
+
+function createTag(item, itemsArray, itemContainer, input, parentContainer, tagArray, backgroundColor) {
     item.addEventListener('click', (e) => {
+
         let tag = document.createElement('div');
+        let deleteIconSpan = document.createElement('span');
         let deleteIcon = document.createElement('i');
+        const container = document.querySelector('.selected-item');
+        deleteIconSpan.addEventListener('click', (e) => {
+            tag.remove();
+            let itemIndex = tagArray.indexOf(item.innerText);
+            tagArray.splice(itemIndex, 1)
+            searchRecipe();
+
+            if (container.innerHTML === '' && _searchInput.value === '') {
+                displayRecipe(_recipesArray);
+            } else {
+                displayRecipe(_recipeResult);
+            }
+
+            displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
+            displayDetailsInFilters(_noDuplicateUstensil, toolsHiddenData, tagToolsInput, 'tools-filter', '#ED6454', _dropdownTagsTools);
+            displayDetailsInFilters(_noDuplicateApparels, apparelsHiddenData, tagApparelsInput, 'apparels-filter', '#68D9A4', _dropdownTagsApparels);
+
+        });
+
         deleteIcon.classList.add('far', 'fa-times-circle', 'delete-icon');
         tag.classList.remove('hide-tag');
         tag.classList.add('item');
         tag.innerText = e.target.innerText;
-        tag.appendChild(deleteIcon);
+        deleteIconSpan.appendChild(deleteIcon)
+
+        tag.appendChild(deleteIconSpan);
         selectedItemContainer.appendChild(tag);
         if (input.parentNode.id === parentContainer) {
             tagArray.push(e.target.innerText);
+            console.log(tagArray)
             tag.style.backgroundColor = backgroundColor;
         }
-        setTimeout(() => {
-            const deleteIcons = document.querySelectorAll('.delete-icon');
-
-            deleteIcons.forEach(icon => {
-                icon.addEventListener('click', (e) => {
-                    e.target.parentNode.classList.add('hide-tag');
-                })
-            })
-
-        }, 200)
         searchRecipe();
     })
 }
 
 
 function searchInDropdown(input, hiddenDataContainer) {
-    let items = [];
+
     input.addEventListener('keyup', () => {
         if (input.id === 'ingredients-input') {
             items = _noDuplicateIngredient;
+
         } else if (input.id === 'apparels-input') {
             items = _noDuplicateApparels;
+
         } else if (input.id === 'ustensils-input') {
             items = _noDuplicateUstensil;
         }
+
         hiddenDataContainer.innerHTML = '';
         items.forEach((item) => {
             if (item.toLowerCase().includes(input.value.toLowerCase())) {
                 const span = document.createElement('span');
                 span.innerHTML = item;
                 span.classList.add('item-title');
-                hiddenDataContainer.appendChild(span)
+                hiddenDataContainer.appendChild(span);
             }
         })
     })
@@ -297,8 +333,8 @@ function openOrCloseHiddenData(idSelector, filterParent, hiddenDataContainer, in
         if (document.querySelector(idSelector).contains(e.target)) {
             filterParent.style.width = '750px';
             hiddenDataContainer.style.visibility = 'visible';
-            console.log(input)
-            searchInDropdown(input, hiddenDataContainer)
+            searchInDropdown(input, hiddenDataContainer);
+
         } else {
             filterParent.style.width = '250px';
             hiddenDataContainer.style.visibility = 'hidden';
@@ -313,9 +349,6 @@ openOrCloseHiddenData('#apparels-filter', apparelsFilter, apparelsHiddenData, ap
 _searchInput.addEventListener('keyup', () => {
     searchRecipe();
 })
-
-
-searchRecipe();
 
 
 // TODO METTRE TOUT A PLAT DANS UN TABLEAU
