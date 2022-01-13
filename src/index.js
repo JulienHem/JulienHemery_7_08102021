@@ -41,23 +41,65 @@ const tagToolsInput = document.querySelector('.tools-input');
 const tagIngredientsInput = document.querySelector('.ingredients-input');
 const tagApparelsInput = document.querySelector('.apparels-input');
 
+const _everyRecipeWords = [];
+
 
 fetch('../../recipes.json')
     .then((response) => {
         response.json().then(recipes => {
             displayRecipe(recipes);
             _recipesArray = recipes;
-            recipes.forEach(recipe => {
+            recipes.forEach((recipe) => {
+                const localRecipeWord = [];
+                localRecipeWord.push(recipe.name.toLowerCase());
                 recipe.ingredients.forEach(ingredient => {
+                    localRecipeWord.push(ingredient.ingredient.toLowerCase());
                     dropdownIngredientsArray.push(ingredient.ingredient.toLowerCase())
                 })
                 recipe.ustensils.forEach(ustensil => {
+                    localRecipeWord.push(ustensil.toLowerCase());
                     dropdownUstensilsArray.push(ustensil.toLowerCase())
 
                 })
+                localRecipeWord.push(recipe.appliance.toLowerCase());
                 dropdownApparelsArray.push(recipe.appliance.toLowerCase());
 
+                _everyRecipeWords.push(localRecipeWord);
             })
+
+            let tree = new RecipeTree();
+            // 1ST FOR
+            for ( let i = 0; i <= 0 ; i++ ) {
+                let previousNode = null;
+                let reversedLetters = [];
+                // 2ND FOR
+                for( let x = [..._everyRecipeWords[0][i]].length; x > 0; x-- ) {
+                    let next;
+                    if (x === [..._everyRecipeWords[0][i]].length) {
+                        next = null;
+                    } else {
+                        next = previousNode;
+                    }
+                    const data = {
+                        position:  x,
+                        recipe: [0],
+                        value: [..._everyRecipeWords[0][i]][x - 1],
+                        next: next,
+                    }
+                    let recipenode = new RecipeNode(data);
+                    previousNode = recipenode;
+                    reversedLetters.push(recipenode);
+                }
+                for( let j = reversedLetters.length - 1; j >= 0; j-- ) {
+                    if(j === reversedLetters.length - 1) {
+                        tree.verifyValue(reversedLetters[j]);
+
+                    }
+                    // tree.add(reversedLetters[j]);
+                }
+            }
+
+            console.log(tree)
             _noDuplicateIngredient = [...new Set(dropdownIngredientsArray)]
             _noDuplicateUstensil = [...new Set(dropdownUstensilsArray)]
             _noDuplicateApparels = [...new Set(dropdownApparelsArray)]
@@ -67,6 +109,32 @@ fetch('../../recipes.json')
 
         })
     })
+
+class RecipeNode {
+    constructor(data) {
+        this.position = data.position;
+        this.value = data.value;
+        this.recipe = data.recipe;
+        this.next = data.next;
+    }
+}
+
+class RecipeTree {
+    recipeNodes = [];
+    add(recipenode) {
+        this.recipeNodes.push(recipenode);
+    }
+
+    verifyValue(letter) {
+        for( const node of this.recipeNodes) {
+            if(node.position !== 1) continue;
+            if(node.value === letter) {
+                return node;
+            }
+        }
+        return false;
+    }
+}
 
 
 function displayRecipe(recipes) {
