@@ -66,40 +66,55 @@ fetch('../../recipes.json')
 
                 _everyRecipeWords.push(localRecipeWord);
             })
+            console.log(_everyRecipeWords);
 
             let tree = new RecipeTree();
             // 1ST FOR
-            for ( let i = 0; i <= 0 ; i++ ) {
-                let previousNode = null;
-                let reversedLetters = [];
-                // 2ND FOR
-                for( let x = [..._everyRecipeWords[0][i]].length; x > 0; x-- ) {
-                    let next;
-                    if (x === [..._everyRecipeWords[0][i]].length) {
-                        next = null;
-                    } else {
-                        next = previousNode;
-                    }
-                    const data = {
-                        position:  x,
-                        recipe: [0],
-                        value: [..._everyRecipeWords[0][i]][x - 1],
-                        next: next,
-                    }
-                    let recipenode = new RecipeNode(data);
-                    previousNode = recipenode;
-                    reversedLetters.push(recipenode);
-                }
-                for( let j = reversedLetters.length - 1; j >= 0; j-- ) {
-                    if(j === reversedLetters.length - 1) {
-                        tree.verifyValue(reversedLetters[j]);
+            _everyRecipeWords.forEach( (recipe, index ) => {
+                for (let i = 0; i < 1; i++) {
+                    let previousNode = null;
+                    let reversedLetters = [];
+                    // 2ND FOR
+                    for (let x = [...recipe[i]].length; x > 0; x--) {
+                        let next;
+                        if (x === [...recipe[i]].length) {
+                            next = null;
+                        } else {
+                            next = previousNode;
+                        }
 
+                        const data = {
+                            position: x,
+                            recipe: [index],
+                            value: [...recipe[i]][x - 1],
+                            next: next,
+                        }
+                        let recipenode = new RecipeNode(data);
+                        previousNode = recipenode;
+                        reversedLetters.push(recipenode);
                     }
-                    // tree.add(reversedLetters[j]);
+                    let previous = null;
+                    // Get previous letter
+                    for (let j = reversedLetters.length - 1; j >= 0; j--) {
+                        reversedLetters[j].previous = previous;
+                        previous = reversedLetters[j];
+                    }
+                    // TREE IN THE RIGHT ORDER
+                    for (let j = reversedLetters.length - 1; j >= 0; j--) {
+                        if (j === reversedLetters.length - 1) {
+                            const existingNode = tree.verifyValue(reversedLetters[j].value);
+                            if (existingNode) {
+                                check(existingNode, reversedLetters[j], index);
+                                break;
+                            }
+                        }
+                        tree.add(reversedLetters[j]);
+                    }
                 }
-            }
 
+            })
             console.log(tree)
+
             _noDuplicateIngredient = [...new Set(dropdownIngredientsArray)]
             _noDuplicateUstensil = [...new Set(dropdownUstensilsArray)]
             _noDuplicateApparels = [...new Set(dropdownApparelsArray)]
@@ -110,30 +125,57 @@ fetch('../../recipes.json')
         })
     })
 
+// TODO pourquoi on a plusieurs fois la même lettre
+function check( existingNode, compareNode, recipeNumber ) {
+    if ( existingNode.value === compareNode.value ) {
+        if ( !existingNode.recipe.includes(recipeNumber) ) existingNode.recipe.push(recipeNumber);
+        if ( existingNode.next && compareNode.next) {
+            if ( Array.isArray( existingNode.next ) ) {
+                console.log(existingNode);
+                existingNode.next.forEach( node => {
+                    check(node, compareNode.next);
+                })
+            } else {
+                check(existingNode.next, compareNode.next);
+
+            }
+        }
+
+    } else {
+        if( Array.isArray( existingNode.previous.next ) ) {
+            existingNode.previous.next  = [...existingNode.previous.next , compareNode];
+        } else {
+            existingNode.previous.next  = [existingNode.previous.next , compareNode];
+        }
+    }
+}
+
 class RecipeNode {
     constructor(data) {
         this.position = data.position;
         this.value = data.value;
         this.recipe = data.recipe;
         this.next = data.next;
+        this.previous = data.previous;
     }
 }
 
 class RecipeTree {
     recipeNodes = [];
+
     add(recipenode) {
         this.recipeNodes.push(recipenode);
     }
 
     verifyValue(letter) {
-        for( const node of this.recipeNodes) {
-            if(node.position !== 1) continue;
-            if(node.value === letter) {
+        for (const node of this.recipeNodes) {
+            if (node.position !== 1) continue;
+            if (node.value === letter) {
                 return node;
             }
         }
         return false;
-    }
+    };
 }
 
 
@@ -417,14 +459,4 @@ openOrCloseHiddenData('#apparels-filter', apparelsFilter, apparelsHiddenData, ap
 _searchInput.addEventListener('keyup', () => {
     searchRecipe();
 })
-
-
-// TODO METTRE TOUT A PLAT DANS UN TABLEAU
-
-// TODO TRI ALPHABETIQUE SUR CES MOTS
-
-// TODO POSSIBILITE DES LETTRES
-
-
-
 
