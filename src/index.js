@@ -70,8 +70,8 @@ fetch('../../recipes.json')
 
             let tree = new RecipeTree();
             // 1ST FOR
-            _everyRecipeWords.forEach( (recipe, index ) => {
-                for (let i = 0; i < 1; i++) {
+            _everyRecipeWords.forEach((recipe, index) => {
+                for (let i = 0; i < recipe.length; i++) {
                     let previousNode = null;
                     let reversedLetters = [];
                     // 2ND FOR
@@ -114,7 +114,6 @@ fetch('../../recipes.json')
 
             })
             console.log(tree)
-
             _noDuplicateIngredient = [...new Set(dropdownIngredientsArray)]
             _noDuplicateUstensil = [...new Set(dropdownUstensilsArray)]
             _noDuplicateApparels = [...new Set(dropdownApparelsArray)]
@@ -125,27 +124,39 @@ fetch('../../recipes.json')
         })
     })
 
-// TODO pourquoi on a plusieurs fois la même lettre
-function check( existingNode, compareNode, recipeNumber ) {
-    if ( existingNode.value === compareNode.value ) {
-        if ( !existingNode.recipe.includes(recipeNumber) ) existingNode.recipe.push(recipeNumber);
-        if ( existingNode.next && compareNode.next) {
-            if ( Array.isArray( existingNode.next ) ) {
-                console.log(existingNode);
-                existingNode.next.forEach( node => {
-                    check(node, compareNode.next);
+function check(existingNode, compareNode, recipeNumber) {
+    if (existingNode.value === compareNode.value) {
+        if (!existingNode.recipe.includes(recipeNumber)) existingNode.recipe.push(recipeNumber);
+        if (existingNode.next && compareNode.next) {
+            if (Array.isArray(existingNode.next)) {
+                existingNode.next.forEach(node => {
+                    check(node, compareNode.next, recipeNumber);
                 })
             } else {
-                check(existingNode.next, compareNode.next);
-
+                check(existingNode.next, compareNode.next, recipeNumber);
             }
         }
-
     } else {
-        if( Array.isArray( existingNode.previous.next ) ) {
-            existingNode.previous.next  = [...existingNode.previous.next , compareNode];
+        if (Array.isArray(existingNode.previous.next)) {
+            let isInArray = false;
+            let nodeInArray;
+            existingNode.previous.next.forEach(node => {
+                if (node.value === compareNode.value) {
+                    isInArray = true;
+                    nodeInArray = node;
+                }
+            })
+            if (isInArray) {
+                if (nodeInArray.next && compareNode.next) check(nodeInArray.next, compareNode.next, recipeNumber);
+            } else {
+                existingNode.previous.next = [...existingNode.previous.next, compareNode];
+            }
         } else {
-            existingNode.previous.next  = [existingNode.previous.next , compareNode];
+            if (existingNode.previous.value === compareNode.value) {
+                if (existingNode.next && compareNode.next) check(existingNode.next, compareNode.next, recipeNumber);
+            } else {
+                existingNode.previous.next = [existingNode.previous.next, compareNode];
+            }
         }
     }
 }
