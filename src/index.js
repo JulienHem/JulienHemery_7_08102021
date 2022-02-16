@@ -44,123 +44,6 @@ const tagApparelsInput = document.querySelector('.apparels-input');
 const _everyRecipeWords = [];
 
 
-fetch('../../recipes.json')
-    .then((response) => {
-        response.json().then(recipes => {
-            displayRecipe(recipes);
-            _recipesArray = recipes;
-            recipes.forEach((recipe) => {
-                const localRecipeWord = [];
-                localRecipeWord.push(recipe.name.toLowerCase());
-                recipe.ingredients.forEach(ingredient => {
-                    localRecipeWord.push(ingredient.ingredient.toLowerCase());
-                    dropdownIngredientsArray.push(ingredient.ingredient.toLowerCase())
-                })
-                recipe.ustensils.forEach(ustensil => {
-                    localRecipeWord.push(ustensil.toLowerCase());
-                    dropdownUstensilsArray.push(ustensil.toLowerCase())
-
-                })
-                localRecipeWord.push(recipe.appliance.toLowerCase());
-                dropdownApparelsArray.push(recipe.appliance.toLowerCase());
-
-                _everyRecipeWords.push(localRecipeWord);
-            })
-            console.log(_everyRecipeWords);
-
-            let tree = new RecipeTree();
-            // 1ST FOR
-            _everyRecipeWords.forEach((recipe, index) => {
-                for (let i = 0; i < recipe.length; i++) {
-                    let previousNode = null;
-                    let reversedLetters = [];
-                    // 2ND FOR
-                    for (let x = [...recipe[i]].length; x > 0; x--) {
-                        let next;
-                        if (x === [...recipe[i]].length) {
-                            next = null;
-                        } else {
-                            next = previousNode;
-                        }
-
-                        const data = {
-                            position: x,
-                            recipe: [index],
-                            value: [...recipe[i]][x - 1],
-                            next: next,
-                        }
-                        let recipenode = new RecipeNode(data);
-                        previousNode = recipenode;
-                        reversedLetters.push(recipenode);
-                    }
-                    let previous = null;
-                    // Get previous letter
-                    for (let j = reversedLetters.length - 1; j >= 0; j--) {
-                        reversedLetters[j].previous = previous;
-                        previous = reversedLetters[j];
-                    }
-                    // TREE IN THE RIGHT ORDER
-                    for (let j = reversedLetters.length - 1; j >= 0; j--) {
-                        if (j === reversedLetters.length - 1) {
-                            const existingNode = tree.verifyValue(reversedLetters[j].value);
-                            if (existingNode) {
-                                check(existingNode, reversedLetters[j], index);
-                                break;
-                            }
-                        }
-                        tree.add(reversedLetters[j]);
-                    }
-                }
-
-            })
-            console.log(tree)
-            _noDuplicateIngredient = [...new Set(dropdownIngredientsArray)]
-            _noDuplicateUstensil = [...new Set(dropdownUstensilsArray)]
-            _noDuplicateApparels = [...new Set(dropdownApparelsArray)]
-            displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
-            displayDetailsInFilters(_noDuplicateUstensil, toolsHiddenData, tagToolsInput, 'tools-filter', '#ED6454', _dropdownTagsTools);
-            displayDetailsInFilters(_noDuplicateApparels, apparelsHiddenData, tagApparelsInput, 'apparels-filter', '#68D9A4', _dropdownTagsApparels);
-
-        })
-    })
-
-function check(existingNode, compareNode, recipeNumber) {
-    if (existingNode.value === compareNode.value) {
-        if (!existingNode.recipe.includes(recipeNumber)) existingNode.recipe.push(recipeNumber);
-        if (existingNode.next && compareNode.next) {
-            if (Array.isArray(existingNode.next)) {
-                existingNode.next.forEach(node => {
-                    check(node, compareNode.next, recipeNumber);
-                })
-            } else {
-                check(existingNode.next, compareNode.next, recipeNumber);
-            }
-        }
-    } else {
-        if (Array.isArray(existingNode.previous.next)) {
-            let isInArray = false;
-            let nodeInArray;
-            existingNode.previous.next.forEach(node => {
-                if (node.value === compareNode.value) {
-                    isInArray = true;
-                    nodeInArray = node;
-                }
-            })
-            if (isInArray) {
-                if (nodeInArray.next && compareNode.next) check(nodeInArray.next, compareNode.next, recipeNumber);
-            } else {
-                existingNode.previous.next = [...existingNode.previous.next, compareNode];
-            }
-        } else {
-            if (existingNode.previous.value === compareNode.value) {
-                if (existingNode.next && compareNode.next) check(existingNode.next, compareNode.next, recipeNumber);
-            } else {
-                existingNode.previous.next = [existingNode.previous.next, compareNode];
-            }
-        }
-    }
-}
-
 class RecipeNode {
     constructor(data) {
         this.position = data.position;
@@ -189,11 +72,155 @@ class RecipeTree {
     };
 }
 
+let _tree = new RecipeTree();
+
+
+fetch('../../recipes.json')
+    .then((response) => {
+        response.json().then(recipes => {
+            displayRecipe(recipes);
+            _recipesArray = recipes;
+            recipes.forEach((recipe) => {
+                const localRecipeWord = [];
+                localRecipeWord.push(recipe.name.toLowerCase());
+                recipe.ingredients.forEach(ingredient => {
+                    localRecipeWord.push(ingredient.ingredient.toLowerCase());
+                    dropdownIngredientsArray.push(ingredient.ingredient.toLowerCase())
+                })
+                recipe.ustensils.forEach(ustensil => {
+                    localRecipeWord.push(ustensil.toLowerCase());
+                    dropdownUstensilsArray.push(ustensil.toLowerCase())
+
+                })
+                if (recipe.appliance !== '') {
+                    localRecipeWord.push(recipe.appliance.toLowerCase());
+                    dropdownApparelsArray.push(recipe.appliance.toLowerCase());
+                }
+
+                _everyRecipeWords.push(localRecipeWord);
+            })
+
+            // 1ST FOR
+
+            for (const [index, recipe] of _everyRecipeWords.entries())  {
+                for (let i = 0; i < recipe.length; i++) {
+                    let previousNode = null;
+                    let reversedLetters = [];
+                    // 2ND FOR
+                    for (let x = recipe[i].length; x > 0; x--) {
+                        let next;
+                        if (x === recipe[i].length) {
+                            next = null;
+                        } else {
+                            next = previousNode;
+                        }
+
+                        const data = {
+                            position: x,
+                            recipe: [index],
+                            value: [...recipe[i]][x - 1],
+                            next: next,
+                        }
+                        let recipenode = new RecipeNode(data);
+                        previousNode = recipenode;
+                        reversedLetters.push(recipenode);
+                    }
+                    let previous = null;
+                    // Get previous letter
+                    for (let j = reversedLetters.length - 1; j >= 0; j--) {
+                        reversedLetters[j].previous = previous;
+                        previous = reversedLetters[j];
+                    }
+                    // TREE IN THE RIGHT ORDER
+                    const existingNode = _tree.verifyValue(reversedLetters[reversedLetters.length - 1].value);
+                    if (existingNode) {
+                        check(existingNode, reversedLetters[reversedLetters.length - 1], index);
+                    } else {
+                        _tree.add(reversedLetters[reversedLetters.length - 1]);
+                    }
+                }
+
+            }
+            console.log(_tree)
+            _noDuplicateIngredient = [...new Set(dropdownIngredientsArray)]
+            _noDuplicateUstensil = [...new Set(dropdownUstensilsArray)]
+            _noDuplicateApparels = [...new Set(dropdownApparelsArray)]
+            displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
+            displayDetailsInFilters(_noDuplicateUstensil, toolsHiddenData, tagToolsInput, 'tools-filter', '#ED6454', _dropdownTagsTools);
+            displayDetailsInFilters(_noDuplicateApparels, apparelsHiddenData, tagApparelsInput, 'apparels-filter', '#68D9A4', _dropdownTagsApparels);
+
+        })
+    })
+
+function check(existingNode, compareNode, recipeNumber) {
+    if (existingNode.value === compareNode.value) {
+        if (!existingNode.recipe.includes(recipeNumber)) existingNode.recipe.push(recipeNumber);
+        if (existingNode.next && compareNode.next) {
+            if (Array.isArray(existingNode.next)) {
+                let matchOne = false;
+                let matchNode;
+                existingNode.next.forEach(node => {
+                    if (node.value === compareNode.next.value) {
+                        matchOne = true;
+                        matchNode = node
+                    }
+                })
+                if (matchOne) {
+                    check(matchNode, compareNode.next, recipeNumber);
+                } else {
+                    existingNode.next.forEach(node => {
+                        check(node, compareNode.next, recipeNumber);
+                    })
+                }
+            } else {
+                check(existingNode.next, compareNode.next, recipeNumber);
+            }
+        } else if (compareNode.next) {
+            existingNode.next = compareNode.next;
+        }
+    } else {
+        if (Array.isArray(existingNode.previous.next)) {
+            let isInArray = false;
+            let nodeInArray;
+            existingNode.previous.next.forEach(node => {
+                if (node.value === compareNode.value) {
+                    isInArray = true;
+                    nodeInArray = node;
+                }
+            })
+            if (isInArray) {
+                if (nodeInArray.next && compareNode.next) {
+                    if (Array.isArray(nodeInArray.next)) {
+                        nodeInArray.next.forEach(node => {
+                            check(node, compareNode.next, recipeNumber);
+                        })
+                    } else {
+                        if (nodeInArray.next.value !== compareNode.next.value) {
+                            nodeInArray.next = [nodeInArray.next, compareNode.next];
+                        }
+                        check(nodeInArray, compareNode.next, recipeNumber);
+                    }
+                } else if (compareNode.next) {
+                    nodeInArray.next = compareNode.next;
+                }
+            } else {
+                existingNode.previous.next = [...existingNode.previous.next, compareNode];
+            }
+        } else {
+            if (compareNode.value === 'f') {
+                existingNode.previous.next = [existingNode.previous.next, compareNode, 'tata'];
+            } else {
+                existingNode.previous.next = [existingNode.previous.next, compareNode];
+            }
+        }
+    }
+}
+
 
 function displayRecipe(recipes) {
     cardContainer.innerHTML = '';
 
-    for (const {name, time, description, ingredients} of recipes) {
+    for (const { name, time, description, ingredients } of recipes) {
         const card = document.createElement('div');
         const cardImg = document.createElement('div');
         const cardDetails = document.createElement('div');
@@ -214,7 +241,7 @@ function displayRecipe(recipes) {
         cardIngredientContainer.classList.add('card-details-bot-container');
         cardDetailsBot.appendChild(cardIngredientContainer)
 
-        for (const {ingredient, quantity, unit} of ingredients) {
+        for (const { ingredient, quantity, unit } of ingredients) {
 
             const cardIngredients = document.createElement('div');
             cardIngredients.classList.add('card-details-bot-ingredients');
@@ -241,6 +268,33 @@ function displayRecipe(recipes) {
     }
 }
 
+function searchingNode( node, count, callback) {
+
+    if( Array.isArray(node.next) ) {
+
+
+
+    } else {
+        console.log(node.value, _searchInput.value[count])
+        if(node.value === _searchInput.value[count]) {
+            console.log(node.next, _searchInput.value.length, count)
+
+            if(node.next && _searchInput.value.length > count + 1) {
+                console.log('on passe ?')
+                searchingNode(node.next, count + 1, callback);
+            } else if (!node.next && _searchInput.value.length > count + 1) {
+                console.log('slt')
+                callback(false);
+            } else if ( _searchInput.value.length === count + 1) {
+                console.log('true')
+                callback(node);
+            }
+        } else {
+            console.log('dernier else')
+            callback(false);
+        }
+    }
+}
 
 function searchRecipe() {
     _recipeResult = [..._recipesArray];
@@ -249,86 +303,98 @@ function searchRecipe() {
     let tagsApparelsArray = [];
 
 
-    _recipesArray.forEach(recipe => {
-        let recipeIncluded = false;
-        let hasBeenFiltered = false;
 
-        if (_searchInput.value.length >= 3) {
-            hasBeenFiltered = true;
-            if (recipe.name.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                recipeIncluded = true;
+    if (_searchInput.value.length >= 3) {
+        _tree.recipeNodes.forEach(node => {
+            if(node.value === _searchInput.value[0]) {
+                searchingNode(node.next, 1, (boolean) => {console.log(boolean) })
             }
+        })
 
-            recipe.ingredients.forEach(ingredient => {
-                if (ingredient.ingredient.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                    recipeIncluded = true;
-                }
-            });
-            recipe.ustensils.forEach(ustensil => {
-                if (ustensil.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                    recipeIncluded = true;
-                }
-            });
 
-            if (recipe.appliance.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                recipeIncluded = true;
-            }
-        }
+    }
 
-        if (_dropdownTagsIngredients.length > 0) {
-            hasBeenFiltered = true;
-            recipeIncluded = false;
 
-            _dropdownTagsIngredients.forEach(ingredientTag => {
-                recipe.ingredients.forEach(ingredient => {
-                    if (ingredient.ingredient.toLowerCase().includes(ingredientTag.toLowerCase())) {
-                        recipeIncluded = true;
-                    }
-                })
-                if (!recipeIncluded) {
-                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
-                    return;
-                }
-            });
-            if (!recipeIncluded) {
-                return;
-            }
-        }
-        if (_dropdownTagsTools.length > 0) {
-            hasBeenFiltered = true;
-            recipeIncluded = false;
-            _dropdownTagsTools.forEach(toolsTag => {
-                recipe.ustensils.forEach(tool => {
-                    if (tool.toLowerCase().includes(toolsTag.toLowerCase())) {
-                        recipeIncluded = true;
-                    }
-                })
-                if (!recipeIncluded) {
-                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
-                    return;
-                }
-            });
-            if (!recipeIncluded) {
-                return;
-            }
-
-        }
-        if (_dropdownTagsApparels.length > 0) {
-            hasBeenFiltered = true;
-            _dropdownTagsApparels.forEach(apparelsTag => {
-                recipeIncluded = recipe.appliance.toLowerCase().includes(apparelsTag.toLowerCase());
-                console.log(recipeIncluded)
-                if (!recipeIncluded) {
-                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
-                    return;
-                }
-            });
-            if (!recipeIncluded) {
-                return;
-            }
-        }
-
-    })
+    // _recipesArray.forEach(recipe => {
+    //     let recipeIncluded = false;
+    //     let hasBeenFiltered = false;
+    //
+    //     if (_searchInput.value.length >= 3) {
+    //         hasBeenFiltered = true;
+    //         if (recipe.name.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+    //             recipeIncluded = true;
+    //         }
+    //
+    //         recipe.ingredients.forEach(ingredient => {
+    //             if (ingredient.ingredient.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+    //                 recipeIncluded = true;
+    //             }
+    //         });
+    //         recipe.ustensils.forEach(ustensil => {
+    //             if (ustensil.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+    //                 recipeIncluded = true;
+    //             }
+    //         });
+    //
+    //         if (recipe.appliance.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+    //             recipeIncluded = true;
+    //         }
+    //     }
+    //
+    //     if (_dropdownTagsIngredients.length > 0) {
+    //         hasBeenFiltered = true;
+    //         recipeIncluded = false;
+    //
+    //         _dropdownTagsIngredients.forEach(ingredientTag => {
+    //             recipe.ingredients.forEach(ingredient => {
+    //                 if (ingredient.ingredient.toLowerCase().includes(ingredientTag.toLowerCase())) {
+    //                     recipeIncluded = true;
+    //                 }
+    //             })
+    //             if (!recipeIncluded) {
+    //                 spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
+    //                 return;
+    //             }
+    //         });
+    //         if (!recipeIncluded) {
+    //             return;
+    //         }
+    //     }
+    //     if (_dropdownTagsTools.length > 0) {
+    //         hasBeenFiltered = true;
+    //         recipeIncluded = false;
+    //         _dropdownTagsTools.forEach(toolsTag => {
+    //             recipe.ustensils.forEach(tool => {
+    //                 if (tool.toLowerCase().includes(toolsTag.toLowerCase())) {
+    //                     recipeIncluded = true;
+    //                 }
+    //             })
+    //             if (!recipeIncluded) {
+    //                 spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
+    //                 return;
+    //             }
+    //         });
+    //         if (!recipeIncluded) {
+    //             return;
+    //         }
+    //
+    //     }
+    //     if (_dropdownTagsApparels.length > 0) {
+    //         hasBeenFiltered = true;
+    //         _dropdownTagsApparels.forEach(apparelsTag => {
+    //             recipeIncluded = recipe.appliance.toLowerCase().includes(apparelsTag.toLowerCase());
+    //             console.log(recipeIncluded)
+    //             if (!recipeIncluded) {
+    //                 spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
+    //                 return;
+    //             }
+    //         });
+    //         if (!recipeIncluded) {
+    //             return;
+    //         }
+    //     }
+    //
+    // })
 
     _recipeResult.forEach(recipe => {
 
@@ -347,7 +413,6 @@ function searchRecipe() {
     _noDuplicateIngredient = [...new Set(tagsIngredientsArray)];
     _noDuplicateUstensil = [...new Set(tagsToolArray)];
     _noDuplicateApparels = [...new Set(tagsApparelsArray)];
-    console.log(_recipeResult)
 
     displayRecipe(_recipeResult);
     displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
@@ -415,7 +480,6 @@ function createTag(item, itemsArray, itemContainer, input, parentContainer, tagA
         selectedItemContainer.appendChild(tag);
         if (input.parentNode.id === parentContainer) {
             tagArray.push(e.target.innerText);
-            console.log(tagArray)
             tag.style.backgroundColor = backgroundColor;
         }
         searchRecipe();
@@ -470,4 +534,3 @@ openOrCloseHiddenData('#apparels-filter', apparelsFilter, apparelsHiddenData, ap
 _searchInput.addEventListener('keyup', () => {
     searchRecipe();
 })
-
