@@ -5,6 +5,7 @@ import '@fortawesome/fontawesome-free/js/regular';
 import '@fortawesome/fontawesome-free/js/brands';
 
 let _recipesArray = [];
+let _recipeResult = [];
 
 let searchBarResult = [];
 
@@ -233,37 +234,48 @@ function displayDetailsInFilters(itemsArray, itemContainer, input, parentContain
         itemTitle.classList.add('item-title');
         itemTitle.innerText = item;
         itemContainer.appendChild(itemTitle);
-        createTag(itemTitle, index, input, parentContainer, tagsArray, backgroundColor);
+        createTag(itemTitle, itemsArray, index, input, parentContainer, tagsArray, backgroundColor);
     })
 
 
 }
 
 
-function createTag(item, index, input, parentContainer, tagArray, backgroundColor) {
+function createTag(item, itemsArray, itemContainer, input, parentContainer, tagArray, backgroundColor) {
     item.addEventListener('click', (e) => {
+
         let tag = document.createElement('div');
+        let deleteIconSpan = document.createElement('span');
         let deleteIcon = document.createElement('i');
+        const container = document.querySelector('.selected-item');
+        deleteIconSpan.addEventListener('click', (e) => {
+            tag.remove();
+            let itemIndex = tagArray.indexOf(item.innerText);
+            tagArray.splice(itemIndex, 1)
+            searchRecipe();
+
+            if (container.innerHTML === '' && _searchInput.value === '') {
+                displayRecipe(_recipesArray);
+            }
+
+            displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
+            displayDetailsInFilters(_noDuplicateUstensil, toolsHiddenData, tagToolsInput, 'tools-filter', '#ED6454', _dropdownTagsTools);
+            displayDetailsInFilters(_noDuplicateApparels, apparelsHiddenData, tagApparelsInput, 'apparels-filter', '#68D9A4', _dropdownTagsApparels);
+
+        });
+
         deleteIcon.classList.add('far', 'fa-times-circle', 'delete-icon');
         tag.classList.remove('hide-tag');
         tag.classList.add('item');
         tag.innerText = e.target.innerText;
-        tag.appendChild(deleteIcon);
+        deleteIconSpan.appendChild(deleteIcon)
+
+        tag.appendChild(deleteIconSpan);
         selectedItemContainer.appendChild(tag);
         if (input.parentNode.id === parentContainer) {
             tagArray.push(e.target.innerText);
             tag.style.backgroundColor = backgroundColor;
         }
-        setTimeout(() => {
-            const deleteIcons = document.querySelectorAll('.delete-icon');
-
-            deleteIcons.forEach(icon => {
-                icon.addEventListener('click', (e) => {
-                    e.target.parentNode.classList.add('hide-tag');
-                })
-            })
-
-        }, 200)
         searchRecipe();
     })
 }
