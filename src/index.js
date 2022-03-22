@@ -328,63 +328,70 @@ function searchRecipe() {
         let recipeIncluded = false;
         let hasBeenFiltered = false;
 
-        if (_dropdownTagsIngredients.length > 0) {
+        if (_searchInput.value.length >= 3) {
             hasBeenFiltered = true;
-            recipeIncluded = false;
+            if (recipe.name.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+                recipeIncluded = true;
+            }
+
+            recipe.ingredients.forEach(ingredient => {
+                if (ingredient.ingredient.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+                    recipeIncluded = true;
+                }
+            });
+            recipe.ustensils.forEach(ustensil => {
+                if (ustensil.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+                    recipeIncluded = true;
+                }
+            });
+
+            if (recipe.appliance.toLowerCase().includes(_searchInput.value.toLowerCase())) {
+                recipeIncluded = true;
+            }
+        }
+
+        if (_dropdownTagsIngredients.length > 0) {
+            recipeIncluded = hasBeenFiltered && !recipeIncluded ? false : true;
+            hasBeenFiltered = true;
+
 
             _dropdownTagsIngredients.forEach(ingredientTag => {
-                recipe.ingredients.forEach(ingredient => {
-                    if (ingredient.ingredient.toLowerCase().includes(ingredientTag.toLowerCase())) {
-                        recipeIncluded = true;
-                    }
-                })
-                if (!recipeIncluded) {
-                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
-                    return;
+                const filteredIngredient = recipe.ingredients.filter(ingredient => ingredient.ingredient.toLowerCase() === ingredientTag.toLowerCase())
+                if (filteredIngredient.length === 0) {
+                    recipeIncluded = false;
                 }
-            });
-            if (!recipeIncluded) {
-                return;
-            }
-        }
-        if (_dropdownTagsTools.length > 0) {
-            hasBeenFiltered = true;
-            recipeIncluded = false;
-            _dropdownTagsTools.forEach(toolsTag => {
-                recipe.ustensils.forEach(tool => {
-                    if (tool.toLowerCase().includes(toolsTag.toLowerCase())) {
-                        recipeIncluded = true;
-                    }
-                })
-                if (!recipeIncluded) {
-                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
-                    return;
-                }
-            });
-            if (!recipeIncluded) {
-                return;
-            }
+            })
+
 
         }
+        if (_dropdownTagsTools.length > 0) {
+            recipeIncluded = hasBeenFiltered && !recipeIncluded ? false : true;
+            hasBeenFiltered = true;
+
+            _dropdownTagsTools.forEach(toolsTag => {
+                const filteredTool = recipe.ustensils.filter(ustensil => ustensil.toLowerCase() === toolsTag.toLowerCase())
+                if (filteredTool.length === 0) {
+                    recipeIncluded = false;
+                }
+            })
+        }
+
         if (_dropdownTagsApparels.length > 0) {
             hasBeenFiltered = true;
             _dropdownTagsApparels.forEach(apparelsTag => {
                 recipeIncluded = recipe.appliance.toLowerCase().includes(apparelsTag.toLowerCase());
-                console.log(recipeIncluded)
-                if (!recipeIncluded) {
-                    spliceRecipe(recipeIncluded, hasBeenFiltered, recipe);
-                    return;
-                }
-            });
-            if (!recipeIncluded) {
-                return;
-            }
+            })
         }
 
+        if (!recipeIncluded && hasBeenFiltered) {
+            const recipeIndex = _recipeResult.indexOf(recipe);
+            _recipeResult.splice(recipeIndex, 1);
+        }
     })
 
-    _recipeResult.forEach(recipe => {
+    cardContainer.innerHTML = '';
 
+    _recipeResult.forEach(recipe => {
         recipe.ingredients.forEach(ingredient => {
             tagsIngredientsArray.push(ingredient.ingredient.toLowerCase())
         })
@@ -395,8 +402,6 @@ function searchRecipe() {
         tagsApparelsArray.push(recipe.appliance.toLowerCase());
 
     })
-
-
     _noDuplicateIngredient = [...new Set(tagsIngredientsArray)];
     _noDuplicateUstensil = [...new Set(tagsToolArray)];
     _noDuplicateApparels = [...new Set(tagsApparelsArray)];
