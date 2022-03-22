@@ -169,11 +169,8 @@ function searchRecipe() {
             recipeIncluded = hasBeenFiltered && !recipeIncluded ? false : true;
             hasBeenFiltered = true;
 
-
-
             _dropdownTagsTools.forEach(toolsTag => {
                     const filteredTool = recipe.ustensils.filter(ustensil => ustensil.toLowerCase() === toolsTag.toLowerCase())
-
                     if (filteredTool.length === 0) {
                         recipeIncluded = false;
                     }
