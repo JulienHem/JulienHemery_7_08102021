@@ -44,6 +44,7 @@ const tagApparelsInput = document.querySelector('.apparels-input');
 const _everyRecipeWords = [];
 
 
+// THE NODE THAT WE BASE OUR SARCH
 class RecipeNode {
     constructor(data) {
         this.position = data.position;
@@ -54,6 +55,7 @@ class RecipeNode {
     }
 }
 
+// TREE CLASS, USE TO GET AN ARRAY
 class RecipeTree {
     recipeNodes = [];
 
@@ -61,6 +63,7 @@ class RecipeTree {
         this.recipeNodes.push(recipenode);
     }
 
+    // VERYIFYING IF THE VALUE ECXISTS SO WE CAN CONTINUE CREATING THE NODE
     verifyValue(letter) {
         for (const node of this.recipeNodes) {
             if (node.position !== 1) continue;
@@ -79,6 +82,7 @@ fetch('../../recipes.json')
     .then((response) => {
         response.json().then(recipes => {
             displayRecipe(recipes);
+            // FILLING THE ARRAY SO WE CAN ACCESS IT EVERYWHERE
             _recipesArray = recipes;
             recipes.forEach((recipe) => {
                 const localRecipeWord = [];
@@ -100,8 +104,7 @@ fetch('../../recipes.json')
                 _everyRecipeWords.push(localRecipeWord);
             })
 
-            // 1ST FOR
-
+            // 1ST FOR TO CREATE THE ARRAY FULL OF LETTERS
             for (const [index, recipe] of _everyRecipeWords.entries())  {
                 for (let i = 0; i < recipe.length; i++) {
                     let previousNode = null;
@@ -115,6 +118,7 @@ fetch('../../recipes.json')
                             next = previousNode;
                         }
 
+                        // FILLING THE NODES OF RECIPES, INGREDIENTS...
                         const data = {
                             position: x,
                             recipe: [index],
@@ -126,25 +130,29 @@ fetch('../../recipes.json')
                         reversedLetters.push(recipenode);
                     }
                     let previous = null;
-                    // Get previous letter
+                    // GETTING THE PREVIOUS LETTER SO WE CAN GO BACK
                     for (let j = reversedLetters.length - 1; j >= 0; j--) {
                         reversedLetters[j].previous = previous;
                         previous = reversedLetters[j];
                     }
-                    // TREE IN THE RIGHT ORDER
+                    // CHECKING IF THERE IS AN EXISTING NODE
                     const existingNode = _tree.verifyValue(reversedLetters[reversedLetters.length - 1].value);
                     if (existingNode) {
+                        // IF IT EXISTS WE CHECK IT
                         check(existingNode, reversedLetters[reversedLetters.length - 1], index);
                     } else {
+                        // IF IT DOESNT EXIST WE CREATE IT IT
                         _tree.add(reversedLetters[reversedLetters.length - 1]);
                     }
                 }
 
             }
 
+            // DELETING EVERY DUPLICATES OF THE ARRAY
             _noDuplicateIngredient = [...new Set(dropdownIngredientsArray)]
             _noDuplicateUstensil = [...new Set(dropdownUstensilsArray)]
             _noDuplicateApparels = [...new Set(dropdownApparelsArray)]
+            // DISPLAYING THE DATA IN FILTERS
             displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
             displayDetailsInFilters(_noDuplicateUstensil, toolsHiddenData, tagToolsInput, 'tools-filter', '#ED6454', _dropdownTagsTools);
             displayDetailsInFilters(_noDuplicateApparels, apparelsHiddenData, tagApparelsInput, 'apparels-filter', '#68D9A4', _dropdownTagsApparels);
@@ -152,9 +160,13 @@ fetch('../../recipes.json')
         })
     })
 
+// CHECKING EVERYTHING IN THE NODE
 function check(existingNode, compareNode, recipeNumber) {
+    // CHECKING IF THE NODE IS EQUAL TO THE ONE THAT ALREADY EXISTS
     if (existingNode.value === compareNode.value) {
+        // IF WE DONT HAVE THE ID OF THE RECIPE WE PUSH IT
         if (!existingNode.recipe.includes(recipeNumber)) existingNode.recipe.push(recipeNumber);
+        // IF WE HAVE A NEXT IN OUR NODE AND OUR COMPAREDNODE WE CAN CHECK THE NEXT ONES AND IF ITS MATCHING
         if (existingNode.next && compareNode.next) {
             if (Array.isArray(existingNode.next)) {
                 let matchOne = false;
@@ -165,6 +177,7 @@ function check(existingNode, compareNode, recipeNumber) {
                         matchNode = node
                     }
                 })
+                // IF ITS MATCHING WITH AN EXISTING RECIPE/INGREDIENT...
                 if (matchOne) {
                     check(matchNode, compareNode.next, recipeNumber);
                 } else {
@@ -179,15 +192,18 @@ function check(existingNode, compareNode, recipeNumber) {
             existingNode.next = compareNode.next;
         }
     } else {
+        // CHECK IF NEXT IS AN ARRAY
         if (Array.isArray(existingNode.previous.next)) {
             let isInArray = false;
             let nodeInArray;
+            // IF ITS AN ARRAY WE FOREACH IN TO INCLUDE AN ODE
             existingNode.previous.next.forEach(node => {
                 if (node.value === compareNode.value) {
                     isInArray = true;
                     nodeInArray = node;
                 }
             })
+            // CHECK IN NODE IS IN ARRAY
             if (isInArray) {
                 if (nodeInArray.next && compareNode.next) {
                     if (Array.isArray(nodeInArray.next)) {
@@ -216,7 +232,7 @@ function check(existingNode, compareNode, recipeNumber) {
     }
 }
 
-
+// CREATING CARDS DYNAMICLY
 function displayRecipe(recipes) {
     cardContainer.innerHTML = '';
 
@@ -230,6 +246,7 @@ function displayRecipe(recipes) {
         const cardIngredientContainer = document.createElement('div');
         const cardDetailsBot = document.createElement('div');
         const cardDescription = document.createElement('div');
+
         card.classList.add('card');
         cardImg.classList.add('card-img');
         cardDetails.classList.add('card-details');
@@ -268,6 +285,7 @@ function displayRecipe(recipes) {
     }
 }
 
+// CHECKING IF THE VALUES IN THE INPUT MATCH NODES
 function compareSearchInput(nodeValue, count, callback) {
         if(nodeValue.next && _searchInput.value.length > count + 1) {
             searchingNode(nodeValue.next, count + 1, callback);
@@ -278,6 +296,7 @@ function compareSearchInput(nodeValue, count, callback) {
         }
 }
 
+// RUNNING IN THE ARRAY
 function searchingNode( nodes, count, callback) {
 
     if( Array.isArray(nodes) ) {
@@ -307,6 +326,7 @@ function searchRecipe() {
     let tagsToolArray = [];
     let tagsApparelsArray = [];
 
+    // WE CALL SARCHINGINPUT WITH A CALLBACK
     if (_searchInput.value.length >= 3) {
         _tree.recipeNodes.forEach(node => {
             if(node.value === _searchInput.value[0].toLowerCase()) {
@@ -323,6 +343,8 @@ function searchRecipe() {
             }
         })
     }
+
+
 
     _recipesArray.forEach(recipe => {
         let recipeIncluded = false;
@@ -350,11 +372,15 @@ function searchRecipe() {
             }
         }
 
+
+
         if (_dropdownTagsIngredients.length > 0) {
+            // TERNARY SO ITS DYNAMIC
             recipeIncluded = hasBeenFiltered && !recipeIncluded ? false : true;
             hasBeenFiltered = true;
 
 
+            // FILTER TO RETRIEVE THE CORRECT TAG
             _dropdownTagsIngredients.forEach(ingredientTag => {
                 const filteredIngredient = recipe.ingredients.filter(ingredient => ingredient.ingredient.toLowerCase() === ingredientTag.toLowerCase())
                 if (filteredIngredient.length === 0) {
@@ -383,6 +409,7 @@ function searchRecipe() {
             })
         }
 
+        // SPLICE THE ARRAY WHEN PRESSING BACK ON KEYBOARD
         if (!recipeIncluded && hasBeenFiltered) {
             const recipeIndex = _recipeResult.indexOf(recipe);
             _recipeResult.splice(recipeIndex, 1);
@@ -413,21 +440,12 @@ function searchRecipe() {
 
 }
 
-function spliceRecipe(recipeIncluded, hasBeenFiltered, recipe) {
-    if (!recipeIncluded && hasBeenFiltered) {
-
-        const recipeIndex = _recipeResult.indexOf(recipe);
-        if (recipeIndex !== -1) _recipeResult.splice(recipeIndex, 1);
-    }
-}
-
 
 function displayDetailsInFilters(itemsArray, itemContainer, input, parentContainer, backgroundColor, tagsArray) {
     itemContainer.innerText = '';
 
     itemsArray.forEach((item) => {
         const itemTitle = document.createElement('span');
-
         itemTitle.classList.add('item-title');
         itemTitle.innerText = item;
         itemContainer.appendChild(itemTitle);
@@ -484,10 +502,8 @@ function searchInDropdown(input, hiddenDataContainer) {
     input.addEventListener('keyup', () => {
         if (input.id === 'ingredients-input') {
             items = _noDuplicateIngredient;
-
         } else if (input.id === 'apparels-input') {
             items = _noDuplicateApparels;
-
         } else if (input.id === 'ustensils-input') {
             items = _noDuplicateUstensil;
         }
