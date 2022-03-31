@@ -326,7 +326,6 @@ function searchRecipe() {
     let tagsToolArray = [];
     let tagsApparelsArray = [];
 
-    // WE CALL SARCHINGINPUT WITH A CALLBACK
     if (_searchInput.value.length >= 3) {
         _tree.recipeNodes.forEach(node => {
             if(node.value === _searchInput.value[0].toLowerCase()) {
@@ -345,34 +344,9 @@ function searchRecipe() {
     }
 
 
-
     _recipesArray.forEach(recipe => {
         let recipeIncluded = false;
         let hasBeenFiltered = false;
-
-        if (_searchInput.value.length >= 3) {
-            hasBeenFiltered = true;
-            if (recipe.name.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                recipeIncluded = true;
-            }
-
-            recipe.ingredients.forEach(ingredient => {
-                if (ingredient.ingredient.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                    recipeIncluded = true;
-                }
-            });
-            recipe.ustensils.forEach(ustensil => {
-                if (ustensil.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                    recipeIncluded = true;
-                }
-            });
-
-            if (recipe.appliance.toLowerCase().includes(_searchInput.value.toLowerCase())) {
-                recipeIncluded = true;
-            }
-        }
-
-
 
         if (_dropdownTagsIngredients.length > 0) {
             // TERNARY SO ITS DYNAMIC
@@ -432,6 +406,7 @@ function searchRecipe() {
     _noDuplicateIngredient = [...new Set(tagsIngredientsArray)];
     _noDuplicateUstensil = [...new Set(tagsToolArray)];
     _noDuplicateApparels = [...new Set(tagsApparelsArray)];
+    console.log(_recipeResult)
 
     displayRecipe(_recipeResult);
     displayDetailsInFilters(_noDuplicateIngredient, ingredientsHiddenData, tagIngredientsInput, 'ingredients-filter', '#3282F7', _dropdownTagsIngredients);
